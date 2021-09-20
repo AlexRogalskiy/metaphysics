@@ -8,6 +8,7 @@ import geodata from "lib/apis/geodata"
 import gravity from "lib/apis/gravity"
 import impulse from "lib/apis/impulse"
 import positron from "lib/apis/positron"
+import { vortex } from "lib/apis/vortex"
 
 import { apiLoaderWithAuthenticationFactory } from "lib/loaders/api/loader_with_authentication_factory"
 import { apiLoaderWithoutAuthenticationFactory } from "lib/loaders/api/loader_without_authentication_factory"
@@ -163,6 +164,21 @@ export default (opts) => ({
   impulseLoaderWithAuthenticationFactory: apiLoaderWithAuthenticationFactory(
     impulse,
     "impulse",
+    {
+      requestIDs: opts.requestIDs,
+      userAgent: opts.userAgent,
+    }
+  ),
+
+  /**
+   * The Vortex loaders produced by this factory _will_ cache responses for the duration of query execution but do
+   * **not** cache to memcache.
+   *
+   * Use this for authenticated requests.
+   */
+  vortexLoaderWithAuthenticationFactory: apiLoaderWithAuthenticationFactory(
+    vortex,
+    "vortex",
     {
       requestIDs: opts.requestIDs,
       userAgent: opts.userAgent,
