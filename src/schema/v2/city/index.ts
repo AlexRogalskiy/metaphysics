@@ -26,6 +26,8 @@ import { allViaLoader, MAX_GRAPHQL_INT } from "lib/all"
 import { StaticPathLoader } from "lib/loaders/api/loader_interface"
 import { BodyAndHeaders } from "lib/loaders"
 import { sponsoredContentForCity } from "lib/sponsoredContent"
+import { createPageCursors } from "../fields/pagination"
+import { HTTPError } from "lib/HTTPError"
 
 export interface TCity {
   slug: string
@@ -88,12 +90,18 @@ export const CityType = new GraphQLObjectType<TCity, ResolverContext>({
             type: GraphQLBoolean,
             description: "Whether to include local discovery stubs",
           },
+          page: { type: GraphQLInt },
+          size: { type: GraphQLInt },
         }),
-        resolve: async (city, args, { showsWithHeadersLoader }) => {
+        resolve: async (city: TCity, args, { showsWithHeadersLoader }) => {
           return loadData(args, showsWithHeadersLoader, {
-            near: city.coords.join(","),
-            max_distance: LOCAL_DISCOVERY_RADIUS_KM,
-            has_location: true,
+            ...(city.slug === "online"
+              ? { has_location: false }
+              : {
+                  near: city.coords.join(","),
+                  max_distance: LOCAL_DISCOVERY_RADIUS_KM,
+                  has_location: true,
+                }),
             at_a_fair: false,
             ...(args.partnerType && { partner_types: args.partnerType }),
             ...(args.dayThreshold && { day_threshold: args.dayThreshold }),
@@ -176,6 +184,13 @@ export const CityType = new GraphQLObjectType<TCity, ResolverContext>({
   },
 })
 
+const ONLINE: TCity = {
+  slug: "online",
+  name: "Online",
+  full_name: "Online",
+  coords: [0, 0], // https://en.wikipedia.org/wiki/Null_Island
+}
+
 export const City: GraphQLFieldConfig<void, ResolverContext> = {
   type: CityType,
   description: "A city-based entry point for local discovery",
@@ -200,6 +215,10 @@ export const City: GraphQLFieldConfig<void, ResolverContext> = {
       throw new Error('One of the arguments "slug" or "near" is required.')
     }
 
+    if (slug === "online") {
+      return ONLINE
+    }
+
     const allCities = await geodataCitiesLoader()
 
     if (slug) {
@@ -216,7 +235,7 @@ const lookupCity = (slug: string, cities: TCity[]) => {
   const city = cities.find((c) => c.slug === slug)
 
   if (!city) {
-    throw new Error(`City "${slug}" not found`)
+    throw new HTTPError(`City "${slug}" not found`, 404)
   }
 
   return city
@@ -252,14 +271,10 @@ async function loadData(
   loader: StaticPathLoader<BodyAndHeaders>,
   baseParams: { [key: string]: any }
 ) {
-  let response
-  let offset
-
   if (args.first === MAX_GRAPHQL_INT) {
-    // TODO: We could throw an error if the `after` arg is passed, but not
-    //       doing so, for now.
-    offset = 0
-    response = await allViaLoader(loader, {
+    // TODO: We could throw an error if the `after` arg is passed, but not doing so, for now.
+    const offset = 0
+    const response = await allViaLoader(loader, {
       params: baseParams,
       api: {
         requestThrottleMs: 7200000, // 1000 * 60 * 60 * 2 = 2 hours
@@ -271,23 +286,35 @@ async function loadData(
       body: data,
       headers: { "x-total-count": data.length.toString() },
     }))
-  } else {
-    const connectionParams = convertConnectionArgsToGravityArgs(args)
-    offset = connectionParams.offset
-    response = await loader({
-      ...baseParams,
-      size: connectionParams.size || 0,
-      page: connectionParams.page || 1,
-      total_count: true,
-    })
+
+    const { headers, body } = response
+    const totalCount = parseInt(headers["x-total-count"] || "0", 10)
+
+    return {
+      totalCount,
+      ...connectionFromArraySlice(body, args, {
+        arrayLength: totalCount,
+        sliceStart: offset,
+      }),
+    }
   }
 
-  const { headers, body: fairs } = response
+  const { offset, size, page } = convertConnectionArgsToGravityArgs(args)
+
+  const response = await loader({
+    ...baseParams,
+    size: size ?? 0,
+    page: page ?? 1,
+    total_count: true,
+  })
+
+  const { headers, body } = response
   const totalCount = parseInt(headers["x-total-count"] || "0", 10)
 
   return {
     totalCount,
-    ...connectionFromArraySlice(fairs, args, {
+    pageCursors: createPageCursors({ page, size }, totalCount),
+    ...connectionFromArraySlice(body, args, {
       arrayLength: totalCount,
       sliceStart: offset,
     }),
