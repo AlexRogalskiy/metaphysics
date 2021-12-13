@@ -38,10 +38,10 @@
   dependencies:
     dotenv "^10.0.0"
 
-"@artsy/update-repo@0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@artsy/update-repo/-/update-repo-0.4.0.tgz#97a00e5cf4bf847214e75d06336c0fb22a7c59b0"
-  integrity sha512-GHSF/oUdIvNW1SE89NTC3NtohYvLeue/uD7JLsUbbdGBqUfzrtB1kM5JcSzTnr7izTlbiaEtMDmh9YfUvBixVA==
+"@artsy/update-repo@0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@artsy/update-repo/-/update-repo-0.5.0.tgz#9beb3fb574a2e039e8912fde3309a564e3f8270a"
+  integrity sha512-DaKQAfcnUtAH4cQabm7gBJEJFAImESRQBoKaNyiH/z1jX7XL1x81NO6iLVeHX7RQbfQJ7hC+VjF+JHR/kM949g==
   dependencies:
     "@octokit/rest" "^17.2.0"
     kleur "^3.0.3"
@@ -8967,35 +8967,7 @@ request-promise-native@^1.0.5:
     stealthy-require "^1.1.0"
     tough-cookie ">=2.3.3"
 
-request@2.83.0:
-  version "2.83.0"
-  resolved "https://registry.yarnpkg.com/request/-/request-2.83.0.tgz#ca0b65da02ed62935887808e6f510381034e3356"
-  integrity sha512-lR3gD69osqm6EYLk9wB/G1W/laGWjzH90t1vEa2xuxHD5KUrSzp9pUSfTm+YC5Nxt2T8nMPEvKlhbQayU7bgFw==
-  dependencies:
-    aws-sign2 "~0.7.0"
-    aws4 "^1.6.0"
-    caseless "~0.12.0"
-    combined-stream "~1.0.5"
-    extend "~3.0.1"
-    forever-agent "~0.6.1"
-    form-data "~2.3.1"
-    har-validator "~5.0.3"
-    hawk "~6.0.2"
-    http-signature "~1.2.0"
-    is-typedarray "~1.0.0"
-    isstream "~0.1.2"
-    json-stringify-safe "~5.0.1"
-    mime-types "~2.1.17"
-    oauth-sign "~0.8.2"
-    performance-now "^2.1.0"
-    qs "~6.5.1"
-    safe-buffer "^5.1.1"
-    stringstream "~0.0.5"
-    tough-cookie "~2.3.3"
-    tunnel-agent "^0.6.0"
-    uuid "^3.1.0"
-
-request@^2.72.0, request@^2.88.0:
+request@2.88.2, request@^2.72.0, request@^2.88.0:
   version "2.88.2"
   resolved "https://registry.yarnpkg.com/request/-/request-2.88.2.tgz#d73c918731cb5a87da047e207234146f664d12b3"
   integrity sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==
