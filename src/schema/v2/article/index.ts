@@ -32,21 +32,36 @@ export const ArticleType = new GraphQLObjectType<any, ResolverContext>({
   fields: () => ({
     ...IDFields,
     cached,
+    authors: {
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(AuthorType))),
+      resolve: async ({ author_ids }, _args, { authorsLoader }) => {
+        if (!author_ids || author_ids.length === 0) return []
+
+        const { results } = await authorsLoader({ ids: author_ids })
+
+        return results
+      },
+    },
     author: {
       type: AuthorType,
+      description:
+        'Maps to the "Primary Author" field in Positron. Ultimately this is only supposed to control the article slug',
+      deprecationReason: "Use `byline` or `authors` instead",
       resolve: ({ author }) => author,
     },
     byline: {
       type: GraphQLString,
       description:
-        'The byline for the article. Defaults to "Artsy Editorial" if no authors are present.',
-      resolve: ({ author, contributing_authors }) => {
-        const contributingAuthors = contributing_authors
-          ?.map((author) => author?.name?.trim())
-          .join(", ")
-          .replace(/,\s([^,]+)$/, " and $1")
+        'The byline for the article. Defaults to "Artsy Editors" if no authors are present.',
+      resolve: async ({ author_ids }, _args, { authorsLoader }) => {
+        if (!author_ids || author_ids.length === 0) return "Artsy Editors"
 
-        return contributingAuthors || author?.name?.trim() || "Artsy Editorial"
+        const { results } = await authorsLoader({ ids: author_ids })
+
+        const names = results.map(({ name }) => name?.trim()).filter(Boolean)
+        const byline = names.join(", ").replace(/,\s([^,]+)$/, " and $1")
+
+        return byline || "Artsy Editors"
       },
     },
     channelArticles: {
@@ -77,6 +92,7 @@ export const ArticleType = new GraphQLObjectType<any, ResolverContext>({
       resolve: ({ channel_id }) => channel_id,
     },
     contributingAuthors: {
+      deprecationReason: "Use `byline` or `authors` instead",
       type: new GraphQLList(AuthorType),
       resolve: ({ contributing_authors }) => contributing_authors,
     },
