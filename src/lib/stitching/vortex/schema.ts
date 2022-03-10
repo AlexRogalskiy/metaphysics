@@ -21,10 +21,12 @@ export const executableVortexSchema = ({
   })
 
   const removeRootFieldList = [
-    "pricingContext",
-    "partnerStat",
-    "userStat",
     "BigInt",
+    "artistAffinities",
+    "artistRecommendations",
+    "partnerStat",
+    "pricingContext",
+    "userStat",
   ]
 
   // Return the new modified schema
