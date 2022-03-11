@@ -52,8 +52,11 @@ export const ArticleType = new GraphQLObjectType<any, ResolverContext>({
       type: GraphQLString,
       description:
         'The byline for the article. Defaults to "Artsy Editors" if no authors are present.',
-      resolve: async ({ author_ids }, _args, { authorsLoader }) => {
-        if (!author_ids || author_ids.length === 0) return "Artsy Editors"
+      resolve: async ({ author_ids, author }, _args, { authorsLoader }) => {
+        if (!author_ids || author_ids.length === 0) {
+          // Attempt to fallback to the `author`. Classic layout articles, for instance, use this.
+          return author?.name || "Artsy Editors"
+        }
 
         const { results } = await authorsLoader({ ids: author_ids })
 
@@ -111,6 +114,12 @@ export const ArticleType = new GraphQLObjectType<any, ResolverContext>({
     layout: {
       type: new GraphQLNonNull(ArticleLayoutEnum),
     },
+    leadParagraph: {
+      type: GraphQLString,
+      description:
+        "Classic layout articles may have a lead paragraph. Returns HTML.",
+      resolve: ({ lead_paragraph }) => lead_paragraph,
+    },
     keywords: {
       type: new GraphQLNonNull(
         new GraphQLList(new GraphQLNonNull(GraphQLString))
@@ -149,6 +158,14 @@ export const ArticleType = new GraphQLObjectType<any, ResolverContext>({
           url: { type: GraphQLString },
         },
       }),
+      resolve: ({ media }) => {
+        if (!media) return null
+
+        // Positron returns an object with null properties rather than an early null
+        if (Object.values(media).filter(Boolean).length === 0) return null
+
+        return media
+      },
     },
     newsSource: {
       type: new GraphQLObjectType({
